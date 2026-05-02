@@ -208,7 +208,7 @@ export function AppShell() {
         </div>
 
         {/* Main content */}
-        <main className="flex flex-1 overflow-hidden min-w-0">
+        <main className="flex flex-1 overflow-hidden min-w-0 min-h-0">
           {viewMode === 'graph' ? (
             <GraphView selectedId={selectedId} onNavigate={handleSelect} />
           ) : selectedId ? (
@@ -222,7 +222,7 @@ export function AppShell() {
               />
               {/* Right panel */}
               <aside
-                className="hidden lg:flex w-64 shrink-0 flex-col overflow-hidden border-l border-border/60"
+                className="hidden lg:flex w-64 min-w-[16rem] max-w-[16rem] shrink-0 flex-col overflow-hidden border-l border-border/60"
                 style={{ background: 'hsl(var(--surface))' }}
               >
                 <Tabs defaultValue="backlinks" className="flex flex-col h-full">

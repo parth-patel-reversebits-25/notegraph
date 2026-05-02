@@ -30,22 +30,24 @@ export function BacklinksPanel({ noteId, onNavigate }: BacklinksPanelProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Section header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40">
+      {/* Section header — always a fixed min-height so loading state never shifts */}
+      <div className="flex min-h-[2.5rem] items-center justify-between px-4 py-2.5 border-b border-border/40">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground select-none">
           Backlinks
         </span>
-        {!loading && (
-          <span
-            className="text-[10px] font-medium tabular-nums rounded-full px-1.5 py-0.5"
-            style={{
-              background: 'hsl(var(--muted))',
-              color: 'hsl(var(--muted-foreground))',
-            }}
-          >
-            {backlinks.length}
-          </span>
-        )}
+        {/* Always render badge slot — invisible during load prevents header height shift */}
+        <span
+          className={cn(
+            'text-[10px] font-medium tabular-nums rounded-full px-1.5 py-0.5 transition-opacity duration-150',
+            loading ? 'invisible' : 'visible',
+          )}
+          style={{
+            background: 'hsl(var(--muted))',
+            color: 'hsl(var(--muted-foreground))',
+          }}
+        >
+          {backlinks.length}
+        </span>
       </div>
 
       <ScrollArea className="flex-1">

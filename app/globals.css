@@ -84,7 +84,7 @@
   --graph-node-selected: 249 83% 55%;
   --graph-node-stub: 240 5% 58%;
   --graph-node-deleted: 0 72% 58%;
-  --graph-edge: 240 6% 78%;
+  --graph-edge: 240 6% 60%;          /* was 78% — now clearly visible */
   --graph-edge-highlight: 249 83% 65%;
   --graph-bg: 240 8% 97%;
 }
@@ -102,8 +102,8 @@
   --popover-foreground: 240 6% 92%;
 
   /* Sidebar / Panel surface */
-  --surface: 240 8% 7%;
-  --surface-elevated: 240 8% 10%;
+  --surface: 240 8% 9%;          /* slightly lifted from bg for panel clarity */
+  --surface-elevated: 240 8% 12%;
 
   /* Primary — Indigo Violet (brighter in dark) */
   --primary: 249 83% 72%;
@@ -136,7 +136,7 @@
   --graph-node-selected: 249 90% 80%;
   --graph-node-stub: 240 5% 44%;
   --graph-node-deleted: 0 65% 55%;
-  --graph-edge: 240 6% 22%;
+  --graph-edge: 240 6% 38%;          /* was 22% — now clearly visible in dark */
   --graph-edge-highlight: 249 83% 72%;
   --graph-bg: 240 10% 5%;
 }

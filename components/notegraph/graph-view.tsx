@@ -234,7 +234,7 @@ export function GraphView({ selectedId, onNavigate }: GraphViewProps) {
   return (
     <div
       ref={containerRef}
-      className="flex-1 relative overflow-hidden graph-canvas-bg"
+      className="flex-1 relative overflow-hidden graph-canvas-bg h-full min-h-0"
       style={{ background: 'hsl(var(--background))' }}
     >
       {/* SVG gradient defs */}
@@ -334,9 +334,11 @@ export function GraphView({ selectedId, onNavigate }: GraphViewProps) {
 
       {/* ── SVG Canvas ───────────────────────────────────── */}
       <svg
-        width={containerSize.w}
-        height={containerSize.h}
-        className="cursor-grab select-none"
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${containerSize.w} ${containerSize.h}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="absolute inset-0 cursor-grab select-none"
         style={{ display: 'block' }}
         onWheel={handleWheel}
         onMouseDown={handleSvgMouseDown}
@@ -365,9 +367,10 @@ export function GraphView({ selectedId, onNavigate }: GraphViewProps) {
                     ? 'hsl(var(--graph-edge-highlight))'
                     : 'hsl(var(--graph-edge))'
                 }
-                strokeWidth={(edge.is_broken ? 1.5 : isHighlighted ? 2 : 1) / zoom}
+                strokeWidth={(edge.is_broken ? 2 : isHighlighted ? 2.5 : 1.5) / zoom}
                 strokeDasharray={edge.is_broken ? `${4 / zoom} ${3 / zoom}` : undefined}
-                strokeOpacity={isHighlighted ? 0.9 : 0.5}
+                strokeOpacity={isHighlighted ? 1 : 0.8}
+                strokeLinecap="round"
               />
             );
           })}

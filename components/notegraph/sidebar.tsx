@@ -38,7 +38,7 @@ export function Sidebar({
 
   return (
     <aside
-      className="flex h-full w-64 flex-shrink-0 flex-col overflow-hidden border-r border-border/60"
+      className="flex h-full w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 flex-col overflow-hidden border-r border-border"
       style={{ background: 'hsl(var(--surface))' }}
     >
       {/* Header */}
@@ -66,10 +66,10 @@ export function Sidebar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={cn(
-              'w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border/60 bg-muted/60',
+              'w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border bg-secondary',
               'placeholder:text-muted-foreground text-foreground',
               'transition-all duration-150',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent focus:bg-background',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring/60 focus:bg-background',
             )}
           />
         </div>
@@ -109,14 +109,14 @@ export function Sidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-border/40 px-3 py-2">
+      <div className="border-t border-border px-3 py-2">
         <button
           onClick={onToggleDeleted}
           className={cn(
             'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-150',
             showDeleted
-              ? 'text-destructive hover:bg-destructive/8'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
+              ? 'text-destructive hover:bg-destructive/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent',
           )}
         >
           {showDeleted
@@ -145,11 +145,10 @@ function NoteItem({
         'group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm',
         'transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         selected
-          ? 'text-accent-foreground font-medium'
-          : 'text-foreground hover:bg-muted/60',
+          ? 'bg-accent text-accent-foreground font-medium'
+          : 'text-foreground hover:bg-accent/60',
         note.is_deleted && 'opacity-50',
       )}
-      style={selected ? { background: 'hsl(var(--accent))' } : undefined}
     >
       {/* Selected left-accent bar */}
       {selected && (
