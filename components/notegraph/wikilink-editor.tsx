@@ -13,7 +13,6 @@ interface WikilinkEditorProps {
   className?: string;
 }
 
-// Returns pixel offset of caret position inside a textarea.
 function getCaretCoordinates(el: HTMLTextAreaElement, pos: number): { top: number; left: number } {
   const mirror = document.createElement('div');
   const style = window.getComputedStyle(el);
@@ -87,8 +86,8 @@ export function WikilinkEditor({
     const taRect = ta.getBoundingClientRect();
     const containerRect = containerRef.current?.getBoundingClientRect() ?? taRect;
     const caret = getCaretCoordinates(ta, cursor);
-    const top = taRect.top - containerRect.top + caret.top + 20;
-    const left = Math.max(0, Math.min(taRect.left - containerRect.left + caret.left, containerRect.width - 224));
+    const top = taRect.top - containerRect.top + caret.top + 22;
+    const left = Math.max(0, Math.min(taRect.left - containerRect.left + caret.left, containerRect.width - 240));
     setDropdownPos({ top, left });
   }
 
@@ -167,14 +166,11 @@ export function WikilinkEditor({
   }
 
   function handleBlur() {
-    // Delay so mousedown on suggestion fires before blur hides it
     setTimeout(() => setShowSuggestions(false), 160);
   }
 
   React.useEffect(() => {
-    return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-    };
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
   }, []);
 
   return (
@@ -192,27 +188,65 @@ export function WikilinkEditor({
 
       {showSuggestions && suggestions.length > 0 && (
         <div
-          className="absolute z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-lg overflow-hidden"
-          style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          className="absolute z-50 w-60 overflow-hidden animate-fade-in"
+          style={{
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            background: 'hsl(var(--popover) / 0.95)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '0.625rem',
+            boxShadow: '0 8px 32px hsl(0 0% 0% / 0.18), 0 2px 8px hsl(0 0% 0% / 0.08)',
+          }}
         >
-          <div className="px-2 py-1 text-[10px] text-muted-foreground border-b">
-            Link to note — ↑↓ navigate · Tab/Enter select · Esc dismiss
+          {/* Keyboard hint row */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/50">
+            <span className="text-[10px] text-muted-foreground">Link to note</span>
+            <span className="ml-auto flex items-center gap-1">
+              {(['↑↓', 'Tab', 'Esc'] as const).map((k) => (
+                <kbd
+                  key={k}
+                  className="px-1 py-0.5 text-[9px] font-mono rounded"
+                  style={{
+                    background: 'hsl(var(--muted))',
+                    color: 'hsl(var(--muted-foreground))',
+                    border: '1px solid hsl(var(--border))',
+                  }}
+                >
+                  {k}
+                </kbd>
+              ))}
+            </span>
           </div>
+
+          {/* Suggestions */}
           {suggestions.map((note, i) => (
             <button
               key={note.id}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                insertSuggestion(note);
-              }}
+              onMouseDown={(e) => { e.preventDefault(); insertSuggestion(note); }}
               className={cn(
-                'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors',
-                i === selectedIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
+                'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors duration-100',
+                i === selectedIdx
+                  ? 'text-accent-foreground'
+                  : 'text-foreground hover:bg-muted/60',
               )}
+              style={i === selectedIdx ? {
+                background: 'hsl(var(--accent))',
+                borderLeft: '2px solid hsl(var(--primary))',
+              } : { borderLeft: '2px solid transparent' }}
             >
               <span className="flex-1 truncate">{note.title}</span>
               {note.is_placeholder && (
-                <span className="text-[10px] text-muted-foreground shrink-0">stub</span>
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded shrink-0"
+                  style={{
+                    background: 'hsl(var(--muted))',
+                    color: 'hsl(var(--muted-foreground))',
+                  }}
+                >
+                  stub
+                </span>
               )}
             </button>
           ))}

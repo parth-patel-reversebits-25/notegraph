@@ -1,14 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Save, Trash2, RefreshCw, Tag, X } from 'lucide-react';
+import { Save, Trash2, RefreshCw, Tag, X, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WikilinkEditor } from '@/components/notegraph/wikilink-editor';
 import { api } from '@/lib/api';
 import type { Note } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 interface NoteEditorProps {
   noteId: string;
@@ -48,6 +48,19 @@ export function NoteEditor({ noteId, onSaved, onDeleted, onRestored }: NoteEdito
     });
     return () => { cancelled = true; };
   }, [noteId]);
+
+  // Ctrl/Cmd + S shortcut
+  React.useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (dirty && note && !note.is_deleted) save();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, note, title, body, tags]);
 
   const markDirty = () => setDirty(true);
 
@@ -111,10 +124,14 @@ export function NoteEditor({ noteId, onSaved, onDeleted, onRestored }: NoteEdito
 
   if (loading) {
     return (
-      <div className="flex-1 p-6 space-y-4">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="h-64 w-full" />
+      <div className="flex-1 p-6 space-y-5 max-w-3xl">
+        <Skeleton className="h-9 w-2/3 rounded-lg" />
+        <Skeleton className="h-5 w-1/3 rounded-md" />
+        <div className="space-y-3 pt-4">
+          <Skeleton className="h-4 w-full rounded-md" />
+          <Skeleton className="h-4 w-5/6 rounded-md" />
+          <Skeleton className="h-4 w-4/5 rounded-md" />
+        </div>
       </div>
     );
   }
@@ -122,58 +139,122 @@ export function NoteEditor({ noteId, onSaved, onDeleted, onRestored }: NoteEdito
   if (!note) return null;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex items-center gap-2 border-b px-4 py-2">
+    <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+
+      {/* ── Deleted banner ───────────────────────────────── */}
+      {note.is_deleted && (
+        <div className="flex items-center gap-2 px-4 py-2 text-xs font-medium shrink-0"
+          style={{
+            background: 'hsl(38 92% 50% / 0.12)',
+            borderBottom: '1px solid hsl(38 92% 50% / 0.25)',
+            color: 'hsl(38 80% 42%)',
+          }}>
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          This note is deleted. Restore it to make edits.
+        </div>
+      )}
+
+      {/* ── Toolbar ──────────────────────────────────────── */}
+      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5 shrink-0"
+        style={{ background: 'hsl(var(--surface))' }}>
         <div className="flex-1 min-w-0">
-          <Input
+          <input
             value={title}
             onChange={(e) => { setTitle(e.target.value); markDirty(); }}
-            className="border-0 text-lg font-semibold shadow-none focus-visible:ring-0 px-0"
+            className={cn(
+              'w-full text-xl font-semibold tracking-tight bg-transparent',
+              'placeholder:text-muted-foreground/40 text-foreground',
+              'border-0 outline-none ring-0 p-0',
+            )}
             placeholder="Untitled"
             disabled={note.is_deleted}
           />
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {note.is_deleted ? (
-            <Button size="sm" variant="outline" onClick={restoreNote} disabled={saving} className="gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={restoreNote}
+              disabled={saving}
+              className="h-8 gap-1.5 text-xs"
+            >
               <RefreshCw className="h-3.5 w-3.5" />
               Restore
             </Button>
           ) : (
             <>
-              <Button size="sm" variant="ghost" onClick={deleteNote} disabled={saving} title="Delete note">
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-              <Button size="sm" onClick={save} disabled={saving || !dirty} className="gap-1.5">
+              <button
+                onClick={deleteNote}
+                disabled={saving}
+                title="Delete note"
+                className="flex h-8 w-8 items-center justify-center rounded-md transition-all duration-150 hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{ color: 'hsl(var(--destructive))' }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={save}
+                disabled={saving || !dirty}
+                className={cn(
+                  'flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium',
+                  'transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  dirty && !saving
+                    ? 'opacity-100 hover:opacity-90 active:scale-95'
+                    : 'opacity-40 cursor-not-allowed',
+                )}
+                style={{
+                  background: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary-foreground))',
+                }}
+                title="Save (Ctrl+S)"
+              >
                 <Save className="h-3.5 w-3.5" />
                 {saving ? 'Saving…' : 'Save'}
-              </Button>
+              </button>
             </>
           )}
         </div>
       </div>
 
+      {/* ── Error message ─────────────────────────────────── */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-2 text-sm">
+        <div className="px-4 py-2 text-xs font-medium shrink-0"
+          style={{
+            background: 'hsl(var(--destructive) / 0.08)',
+            borderBottom: '1px solid hsl(var(--destructive) / 0.15)',
+            color: 'hsl(var(--destructive))',
+          }}>
           {error}
         </div>
       )}
 
-      <div className="flex items-center gap-2 px-4 py-2 border-b">
+      {/* ── Tags row ──────────────────────────────────────── */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/40 shrink-0 min-h-[36px]">
         <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <div className="flex flex-wrap items-center gap-1.5 flex-1">
           {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-1 pr-1 text-xs">
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+              style={{
+                background: 'hsl(var(--primary) / 0.10)',
+                color: 'hsl(var(--primary))',
+              }}
+            >
               {tag}
               {!note.is_deleted && (
-                <button onClick={() => removeTag(tag)} className="rounded-full hover:bg-muted-foreground/20">
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="rounded-sm hover:opacity-70 transition-opacity"
+                >
                   <X className="h-3 w-3" />
                 </button>
               )}
-            </Badge>
+            </span>
           ))}
           {!note.is_deleted && (
-            <Input
+            <input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => {
@@ -182,25 +263,26 @@ export function NoteEditor({ noteId, onSaved, onDeleted, onRestored }: NoteEdito
               }}
               onBlur={() => { if (tagInput) addTag(tagInput); }}
               placeholder="Add tag…"
-              className="h-6 w-24 border-0 shadow-none focus-visible:ring-0 text-xs p-0"
+              className="h-6 min-w-[80px] border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground/50 p-0"
             />
           )}
         </div>
       </div>
 
+      {/* ── Editor body ──────────────────────────────────── */}
       <WikilinkEditor
         value={body}
         onChange={(v) => { setBody(v); markDirty(); }}
-        placeholder="Write your note here. Use [[wikilinks]] to connect notes."
-        className="flex-1 resize-none rounded-none border-0 shadow-none focus-visible:ring-0 font-mono text-sm p-4 w-full"
+        placeholder="Write your note here. Use [[wikilinks]] to link to other notes."
+        className={cn(
+          'flex-1 resize-none rounded-none border-0 shadow-none',
+          'focus:outline-none focus:ring-0',
+          'font-mono text-sm leading-relaxed p-6 w-full bg-transparent text-foreground',
+          'placeholder:text-muted-foreground/40',
+          note.is_deleted && 'pointer-events-none',
+        )}
         disabled={note.is_deleted}
       />
-
-      {note.is_deleted && (
-        <div className="border-t bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
-          This note is deleted. Restore it to edit.
-        </div>
-      )}
     </div>
   );
 }
