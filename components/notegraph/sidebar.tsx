@@ -32,10 +32,12 @@ export function Sidebar({
 }: SidebarProps) {
   const [search, setSearch] = React.useState('');
 
+  const safeNotes = Array.isArray(notes) ? notes : [];
+
   const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return notes.filter((n) => n.title.toLowerCase().includes(q));
-  }, [notes, search]);
+    const q = search.toLowerCase().trim();
+    return safeNotes.filter((n) => (n?.title ?? '').toLowerCase().includes(q));
+  }, [safeNotes, search]);
 
   return (
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r bg-muted/30">

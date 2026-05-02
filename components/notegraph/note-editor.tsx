@@ -4,9 +4,9 @@ import * as React from 'react';
 import { Save, Trash2, RefreshCw, Tag, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WikilinkEditor } from '@/components/notegraph/wikilink-editor';
 import { api } from '@/lib/api';
 import type { Note } from '@/lib/types';
 
@@ -188,11 +188,11 @@ export function NoteEditor({ noteId, onSaved, onDeleted, onRestored }: NoteEdito
         </div>
       </div>
 
-      <Textarea
+      <WikilinkEditor
         value={body}
-        onChange={(e) => { setBody(e.target.value); markDirty(); }}
+        onChange={(v) => { setBody(v); markDirty(); }}
         placeholder="Write your note here. Use [[wikilinks]] to connect notes."
-        className="flex-1 resize-none rounded-none border-0 shadow-none focus-visible:ring-0 font-mono text-sm p-4"
+        className="flex-1 resize-none rounded-none border-0 shadow-none focus-visible:ring-0 font-mono text-sm p-4 w-full"
         disabled={note.is_deleted}
       />
 

@@ -1,33 +1,38 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun, Network } from 'lucide-react';
+import { Moon, Sun, Network, LayoutTemplate } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sidebar } from '@/components/notegraph/sidebar';
 import { NoteEditor } from '@/components/notegraph/note-editor';
 import { BacklinksPanel } from '@/components/notegraph/backlinks-panel';
 import { VersionHistory } from '@/components/notegraph/version-history';
+import { GraphView } from '@/components/notegraph/graph-view';
 import { CreateNoteDialog } from '@/components/notegraph/create-note-dialog';
 import { api } from '@/lib/api';
 import type { Note } from '@/lib/types';
 
 export function AppShell() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
   const [notes, setNotes] = React.useState<Note[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [showDeleted, setShowDeleted] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [rightPanelKey, setRightPanelKey] = React.useState(0);
+  const [viewMode, setViewMode] = React.useState<'editor' | 'graph'>('editor');
 
   async function loadNotes(includeDeleted: boolean) {
     setLoading(true);
     try {
       const data = await api.notes.list(includeDeleted);
-      setNotes(data);
+      setNotes(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
     }
@@ -42,29 +47,35 @@ export function AppShell() {
   function handleSelect(id: string) {
     setSelectedId(id);
     setRightPanelKey((k) => k + 1);
+    setViewMode('editor');
   }
 
   function handleCreated(note: Note) {
-    setNotes((prev) => [note, ...prev]);
+    setNotes((prev) => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const exists = safePrev.some((n) => n.id === note.id);
+      if (exists) return safePrev.map((n) => (n.id === note.id ? note : n));
+      return [note, ...safePrev];
+    });
     setSelectedId(note.id);
     setRightPanelKey((k) => k + 1);
   }
 
   function handleSaved(note: Note) {
-    setNotes((prev) => prev.map((n) => n.id === note.id ? note : n));
+    setNotes((prev) => (Array.isArray(prev) ? prev : []).map((n) => n.id === note.id ? note : n));
   }
 
   function handleDeleted(id: string) {
     if (showDeleted) {
-      setNotes((prev) => prev.map((n) => n.id === id ? { ...n, is_deleted: true } : n));
+      setNotes((prev) => (Array.isArray(prev) ? prev : []).map((n) => n.id === id ? { ...n, is_deleted: true } : n));
     } else {
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      setNotes((prev) => (Array.isArray(prev) ? prev : []).filter((n) => n.id !== id));
       setSelectedId(null);
     }
   }
 
   function handleRestored(note: Note) {
-    setNotes((prev) => prev.map((n) => n.id === note.id ? note : n));
+    setNotes((prev) => (Array.isArray(prev) ? prev : []).map((n) => n.id === note.id ? note : n));
   }
 
   return (
@@ -73,13 +84,34 @@ export function AppShell() {
         <Network className="h-5 w-5 text-primary" />
         <span className="font-semibold tracking-tight">NoteGraph</span>
         <div className="flex-1" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant={viewMode === 'graph' ? 'secondary' : 'ghost'}
+                onClick={() => setViewMode(viewMode === 'graph' ? 'editor' : 'graph')}
+                title="Toggle graph view"
+              >
+                {viewMode === 'graph' ? (
+                  <LayoutTemplate className="h-4 w-4" />
+                ) : (
+                  <Network className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {viewMode === 'graph' ? 'Editor view' : 'Graph view'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Button
           size="icon"
           variant="ghost"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           title="Toggle theme"
         >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {mounted && resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
       </header>
 
@@ -95,7 +127,9 @@ export function AppShell() {
         />
 
         <main className="flex flex-1 overflow-hidden">
-          {selectedId ? (
+          {viewMode === 'graph' ? (
+            <GraphView selectedId={selectedId} onNavigate={handleSelect} />
+          ) : selectedId ? (
             <>
               <NoteEditor
                 key={selectedId}

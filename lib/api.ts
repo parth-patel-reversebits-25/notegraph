@@ -15,7 +15,8 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     const message = (body as { error?: string })?.error ?? `HTTP ${res.status}`;
     throw new Error(message);
   }
-  return body as T;
+  const wrapped = body as { data?: T };
+  return wrapped.data as T;
 }
 
 export const api = {
